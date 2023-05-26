@@ -1,7 +1,7 @@
 import requests
 from tabulate import tabulate
 
-API_KEY = 'RLZ5GE7FUOM57VUY'
+API_KEY = 'YOUR_API_KEY'
 
 def get_company_data(ticker):
     overview_url = f'https://www.alphavantage.co/query?function=OVERVIEW&symbol={ticker}&apikey={API_KEY}'
@@ -17,7 +17,6 @@ def get_company_data(ticker):
             global company_name, exchange_platform, company_description, company_sector, company_industry, company_market_cap, ev_to_ebitda 
             company_name = company_data['Name']
             exchange_platform = company_data['Exchange']
-            #stock_price = company_data['Price']
             company_description = company_data['Description']
             company_sector = company_data['Sector']
             company_industry = company_data['Industry']
@@ -37,15 +36,18 @@ def get_financial_data(ticker):
     income_statement_url = f'https://www.alphavantage.co/query?function=INCOME_STATEMENT&symbol={ticker}&apikey={API_KEY}'
     balance_sheet_url = f'https://www.alphavantage.co/query?function=BALANCE_SHEET&symbol={ticker}&apikey={API_KEY}'
     cash_flow_url = f'https://www.alphavantage.co/query?function=CASH_FLOW&symbol={ticker}&apikey={API_KEY}'
+    stock_price_url = f'https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={ticker}&apikey={API_KEY}'
 
     try:
         # Make API requests for income statement, balance sheet, and cash flow statement
         income_statement_response = requests.get(income_statement_url)
         balance_sheet_response = requests.get(balance_sheet_url)
         cash_flow_response = requests.get(cash_flow_url)
+        stock_price_response = requests.get(stock_price_url)
 
         # Check if all requests are successful
-        if all(response.status_code == 200 for response in [income_statement_response, balance_sheet_response, cash_flow_response]):
+        if all(response.status_code == 200 for response in [income_statement_response, balance_sheet_response, cash_flow_response, stock_price_response]):
+
             # Extract required data from income statement response
             income_data = income_statement_response.json()
             fiscal_year = income_data['annualReports'][0]['fiscalDateEnding']
@@ -89,6 +91,10 @@ def get_financial_data(ticker):
             else:
                 dividend_payout = int(dividend_payout)
 
+            # Get the stock price 
+            stock_price_data = stock_price_response.json()
+            stock_price = stock_price_data['Global Quote']['05. price']
+
             # Calculate ratios
             gross_profit_margin = gross_profit / total_revenues
             ebitda_margin = ebitda / total_revenues
@@ -103,6 +109,7 @@ def get_financial_data(ticker):
             headers = ['Metric', 'Value']
             data = [
                 ['Stock Ticker', ticker_symbol],
+                ['Stock Quote:', stock_price],
                 ['Exchange:', exchange_platform],
                 ['Company Name:', company_name],
                 ['Description:', company_description],
